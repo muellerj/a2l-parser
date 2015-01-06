@@ -1,0 +1,5 @@
+grammar A2lGrammar
+  rule hello
+    'hello jonas'
+  end
+end
