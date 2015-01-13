@@ -1,12 +1,21 @@
 require "rubygems"
 require "treetop"
-Treetop.load File.join(__dir__, "../grammar/a2l")
+require "ostruct"
+require "characteristic"
 
-parser = A2lGrammarParser.new
+class A2lParser
 
-puts "A"
-puts parser.parse "hello Jonas"
-puts "B"
-puts parser.parse "hello jonas"
+  Treetop.load File.join(__dir__, "../grammar/a2l")
 
+  def initialize(filename)
+    @filename = filename
+    @rawcontent = File.open(filename, "rb").read
+    @parser = A2lGrammarParser.new
+  end
 
+  def characteristics
+    #[OpenStruct.new(name: "ASAM.M.SCALAR.UBYTE.IDENTICAL")]
+    @characteristics ||= @parser.parse(@rawcontent)
+  end
+
+end

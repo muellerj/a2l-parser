@@ -1,5 +1,53 @@
 grammar A2lGrammar
-  rule hello
-    'hello jonas'
+  #rule document
+  #  scalar_characteristic* {
+  #    def to_hash
+  #      elements.select { |e| e.respond_to?(:to_hash) }
+  #    end
+  #  }
+  #end
+
+  rule scalar_characteristic
+    '/begin CHARACTERISTIC ' name newline
+    indent? description newline
+    indent? 'VALUE' newline
+    indent? address newline
+    .* {
+      def to_hash
+        elements.reduce({}) { |s, e| s.merge(e.to_hash) rescue s }
+      end
+    }
+  end
+
+  rule name
+    [A-Za-z\._0-9]+ {
+      def to_hash
+        { name: text_value }
+      end
+    }
+  end
+
+  rule address
+    '0x' [\d]+ {
+      def to_hash
+        { address: text_value }
+      end
+    }
+  end
+
+  rule description
+    '"' [^"]* '"' {
+      def to_hash
+        { description: text_value[1..-2] }
+      end
+    }
+  end
+
+  rule indent
+    [\s]+
+  end
+
+  rule newline
+    [\n]
   end
 end

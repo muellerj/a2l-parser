@@ -5,3 +5,6 @@ gem "json"
 gem "rake"
 gem "rspec"
 gem "treetop"
+
+gem "awesome_print"
+gem "pry"
