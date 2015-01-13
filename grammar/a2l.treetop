@@ -9,12 +9,15 @@ grammar A2lGrammar
 
   rule scalar_characteristic
     '/begin CHARACTERISTIC ' name newline
-    indent? description newline
+    (indent? description newline)?
     indent? 'VALUE' newline
     indent? address newline
-    .* {
+    .*
+    {
       def to_hash
-        elements.reduce({}) { |s, e| s.merge(e.to_hash) rescue s }
+        elements.reduce({}) do |s, e|
+          s.merge(e.to_hash) rescue s
+        end
       end
     }
   end
@@ -36,7 +39,7 @@ grammar A2lGrammar
   end
 
   rule description
-    '"' [^"]* '"' {
+    '"' ( '\"' / !'"' . )* '"' {
       def to_hash
         { description: text_value[1..-2] }
       end
@@ -44,10 +47,10 @@ grammar A2lGrammar
   end
 
   rule indent
-    [\s]+
+    [\s]+ { def to_hash; {} end }
   end
 
   rule newline
-    [\n]
+    [\n] { def to_hash; {} end }
   end
 end

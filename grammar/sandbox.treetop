@@ -1,26 +1,45 @@
 grammar Sandbox
-  rule document
-    (text / tag)* {
-      def content
-        elements.map{ |e| e.content }
+  rule label
+    'Start ' name newline
+    (indent? (foo / bar / baz) newline)+
+    'End' newline
+    {
+      def to_hash(n=self)
+        if n.respond_to?(:to_hash) && n != self
+          n.to_hash
+        else
+          n.elements ? n.elements.reduce({}) { |s,e| s.merge(to_hash(e)) } : {}
+        end
       end
     }
   end
 
-  rule text
-    [^<]+ {
-      def content
-        { text: text_value }
+  rule name
+    [A-Za-z\._0-9]+ {
+      def to_hash
+        { name: text_value }
       end
     }
   end
 
-  rule tag
-    '<' [^>]+ '>' {
-      def content
-        { tag: text_value }
-      end
-    }
+  rule foo
+    'foo' { def to_hash; { foo: "present" } end }
+  end
+
+  rule bar
+    'bar' { def to_hash; { bar: "present" } end }
+  end
+
+  rule baz
+    'baz' { def to_hash; { baz: "present" } end }
+  end
+
+  rule indent
+    [\s]+ { def to_hash; {} end }
+  end
+
+  rule newline
+    [\n] { def to_hash; {} end }
   end
 
 end
