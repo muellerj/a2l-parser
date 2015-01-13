@@ -8,10 +8,11 @@ grammar A2lGrammar
   #end
 
   rule scalar_characteristic
-    '/begin CHARACTERISTIC ' name newline
+    '/begin CHARACTERISTIC ' name ([ ] name_annotation)? newline
     (indent? (
       description /
       value /
+      format /
       address /
       row_column_association /
       strange_two_numbers /
@@ -36,12 +37,20 @@ grammar A2lGrammar
     [A-Za-z\._0-9]+ { def to_hash; { name: text_value } end }
   end
 
+  rule name_annotation
+    '"' ( '\"' / !'"' . )* '"' { def to_hash; { name_annotation: text_value[1..-2] } end }
+  end
+
   rule description
     '"' ( '\"' / !'"' . )* '"' { def to_hash; { description: text_value[1..-2] } end }
   end
 
   rule value
-    'VALUE' ([\s] [A-Za-z\._0-9]+)? { def to_hash; { value: text_value } end }
+    'VALUE' ([^\n]+)? { def to_hash; { value: text_value } end }
+  end
+
+  rule format
+    'FORMAT "' [^"]* '"' { def to_hash; { format: text_value } end }
   end
 
   rule address
