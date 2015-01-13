@@ -4,11 +4,11 @@ require "treetop"
 require "awesome_print"
 require "pry"
 
-#Treetop.load File.join(__dir__, "grammar/a2l")
-#parser = A2lGrammarParser.new
+Treetop.load File.join(__dir__, "grammar/a2l")
+parser = A2lGrammarParser.new
 
-Treetop.load File.join(__dir__, "grammar/sandbox")
-parser = SandboxParser.new
+#Treetop.load File.join(__dir__, "grammar/sandbox")
+#parser = SandboxParser.new
 
 TESTA2L = <<-EOS.gsub(/^ {2}/, "")
   /begin CHARACTERISTIC foo.bar.bay
@@ -28,15 +28,13 @@ TESTSTR = <<-EOS.gsub(/^ {2}/, "")
   Start some_stuff
     baz
     bar
-    foo
   End
 EOS
 
-#puts TESTA2L
-#a = parser.parse(TESTA2L)
-#ap a.to_hash
-#binding.pry
-
-a = parser.parse(TESTSTR)
+puts TESTA2L
+a = parser.parse(TESTA2L)
 ap a.to_hash
+
+#a = parser.parse(TESTSTR)
+#ap a.to_hash
 

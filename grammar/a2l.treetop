@@ -9,41 +9,67 @@ grammar A2lGrammar
 
   rule scalar_characteristic
     '/begin CHARACTERISTIC ' name newline
-    (indent? description newline)?
-    indent? 'VALUE' newline
-    indent? address newline
-    .*
+    (indent? (
+      description /
+      value /
+      address /
+      row_column_association /
+      strange_two_numbers /
+      strange_number /
+      identicality /
+      limits /
+      display_identifier
+    ) newline)+
+    '/end CHARACTERISTIC' newline
     {
-      def to_hash
-        elements.reduce({}) do |s, e|
-          s.merge(e.to_hash) rescue s
+      def to_hash(n=self)
+        if n.respond_to?(:to_hash) && n != self
+          n.to_hash
+        else
+          n.elements ? n.elements.reduce({}) { |s,e| s.merge(to_hash(e)) } : {}
         end
       end
     }
   end
 
   rule name
-    [A-Za-z\._0-9]+ {
-      def to_hash
-        { name: text_value }
-      end
-    }
-  end
-
-  rule address
-    '0x' [\d]+ {
-      def to_hash
-        { address: text_value }
-      end
-    }
+    [A-Za-z\._0-9]+ { def to_hash; { name: text_value } end }
   end
 
   rule description
-    '"' ( '\"' / !'"' . )* '"' {
-      def to_hash
-        { description: text_value[1..-2] }
-      end
-    }
+    '"' ( '\"' / !'"' . )* '"' { def to_hash; { description: text_value[1..-2] } end }
+  end
+
+  rule value
+    'VALUE' ([\s] [A-Za-z\._0-9]+)? { def to_hash; { value: text_value } end }
+  end
+
+  rule address
+    '0x' [\d]+ { def to_hash; { address: text_value } end }
+  end
+
+  rule row_column_association
+    'RL.FNC.UBYTE.ROW_DIR' { def to_hash; { row_column_association: text_value } end }
+  end
+
+  rule strange_two_numbers
+    [\d]+ [ ] [\d]+ { def to_hash; { strange_two_numbers: text_value } end }
+  end
+
+  rule strange_number
+    [\d]+ { def to_hash; { strange_number: text_value } end }
+  end
+
+  rule identicality
+    'CM.IDENTICAL' { def to_hash; { identicality: text_value } end }
+  end
+
+  rule limits
+    'EXTENDED_LIMITS' [ ] [\d]+ [ ] [\d]+ { def to_hash; { limits: text_value } end }
+  end
+
+  rule display_identifier
+    'DISPLAY_IDENTIFIER ' [A-Za-z\._0-9]+ { def to_hash; { display_identifier: text_value } end }
   end
 
   rule indent
