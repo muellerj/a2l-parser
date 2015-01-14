@@ -1,19 +1,18 @@
 require "rubygems"
 require "treetop"
-require_relative "grammar/sandbox"
 
 require "awesome_print"
 require "pry"
 
 def parse(data)
-  Treetop.load File.join(__dir__, "grammar/sandbox")
-  parser = SandboxParser.new
-  #Treetop.load File.join(__dir__, "grammar/a2l")
-  #parser = A2lGrammarParser.new
+  require_relative "grammar/a2l"
+  Treetop.load File.join(__dir__, "grammar/a2l")
+  parser = A2lGrammarParser.new
   ast = parser.parse(data)
 
   if ast
-    ap extract_hash(ast)
+    characteristics = walk_tree(ast) { |klass| klass == A2L::Characteristic }
+    ap characteristics
   else
     parser.failure_reason =~ /^(Expected .+) after/m
     puts "#{$1.gsub("\n", '$NEWLINE')}:"
@@ -22,13 +21,10 @@ def parse(data)
   end
 end
 
-def extract_hash(node)
-  [].tap do |ary|
-    node.elements.each do |element|
-      ary.push(extract_hash(element)) if element.elements
-      ary.push(element.to_value) if element.respond_to?(:to_value)
-    end
-  end.flatten
+def walk_tree(root_node, ary=[], &block)
+  ary << root_node.to_array if block.call(root_node.class)
+  (root_node.elements || []).each { |node| walk_tree(node, ary, &block) }
+  ary
 end
 
 
@@ -44,9 +40,7 @@ TESTA2L = <<-EOS.gsub(/^ {2}/, "")
     EXTENDED_LIMITS 0 256
     DISPLAY_IDENTIFIER DI.ASAM.C.SCALAR.UBYTE
   /end CHARACTERISTIC
-EOS
 
-TESTA2L2 = <<-EOS.gsub(/^ {2}/, "")
   /begin CHARACTERISTIC K_Cnt_FIS_DAQ_IGKN_RNG_dec "0x1A040C (DTC (Hex): 0x1A040C)"
     VALUE 0x803CBAA1 _REC_S1VAL_1_u1 0 _CNV_R_R_CM_Def_8_0_CM 0 255
     FORMAT "%6.0"
@@ -60,17 +54,5 @@ TESTA2L2 = <<-EOS.gsub(/^ {2}/, "")
   /end CHARACTERISTIC
 EOS
 
-TESTSTR = <<-EOS.gsub(/^ {2}/, "")
-  /begin FOO some_other stuff
-    baz
-    /begin ANNOTATION
-      la li lu
-      some more
-    /end ANNOTATION
-    bar
-  /end FOO
-EOS
-
-puts TESTSTR
-parse(TESTSTR)
+parse(TESTA2L)
 

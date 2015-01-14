@@ -1,91 +1,25 @@
 grammar A2lGrammar
-  #rule document
-  #  scalar_characteristic* {
-  #    def to_hash
-  #      elements.select { |e| e.respond_to?(:to_hash) }
-  #    end
-  #  }
-  #end
-
-  rule scalar_characteristic
-    '/begin CHARACTERISTIC ' name ([ ] name_annotation)? newline
-    (indent? (
-      description /
-      value /
-      format /
-      address /
-      row_column_association /
-      strange_two_numbers /
-      strange_number /
-      identicality /
-      limits /
-      display_identifier
-    ) newline)+
-    '/end CHARACTERISTIC' newline
-    {
-      def to_hash(n=self)
-        if n.respond_to?(:to_hash) && n != self
-          n.to_hash
-        else
-          n.elements ? n.elements.reduce({}) { |s,e| s.merge(to_hash(e)) } : {}
-        end
-      end
-    }
+  rule document
+    whitespace*
+    ( characteristic whitespace* )*
+    <A2L::Document>
   end
 
-  rule name
-    [A-Za-z\._0-9]+ { def to_hash; { name: text_value } end }
+  rule characteristic
+    '/begin CHARACTERISTIC'
+    (
+      !'/end CHARACTERISTIC'
+      (. / newline)
+    )*
+    '/end CHARACTERISTIC'
+    <A2L::Characteristic>
   end
 
-  rule name_annotation
-    '"' ( '\"' / !'"' . )* '"' { def to_hash; { name_annotation: text_value[1..-2] } end }
-  end
-
-  rule description
-    '"' ( '\"' / !'"' . )* '"' { def to_hash; { description: text_value[1..-2] } end }
-  end
-
-  rule value
-    'VALUE' ([^\n]+)? { def to_hash; { value: text_value } end }
-  end
-
-  rule format
-    'FORMAT "' [^"]* '"' { def to_hash; { format: text_value } end }
-  end
-
-  rule address
-    '0x' [\d]+ { def to_hash; { address: text_value } end }
-  end
-
-  rule row_column_association
-    'RL.FNC.UBYTE.ROW_DIR' { def to_hash; { row_column_association: text_value } end }
-  end
-
-  rule strange_two_numbers
-    [\d]+ [ ] [\d]+ { def to_hash; { strange_two_numbers: text_value } end }
-  end
-
-  rule strange_number
-    [\d]+ { def to_hash; { strange_number: text_value } end }
-  end
-
-  rule identicality
-    'CM.IDENTICAL' { def to_hash; { identicality: text_value } end }
-  end
-
-  rule limits
-    'EXTENDED_LIMITS' [ ] [\d]+ [ ] [\d]+ { def to_hash; { limits: text_value } end }
-  end
-
-  rule display_identifier
-    'DISPLAY_IDENTIFIER ' [A-Za-z\._0-9]+ { def to_hash; { display_identifier: text_value } end }
-  end
-
-  rule indent
-    [\s]+ { def to_hash; {} end }
+  rule whitespace
+    [\s]
   end
 
   rule newline
-    [\n] { def to_hash; {} end }
+    [\n]
   end
 end
