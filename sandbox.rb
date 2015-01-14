@@ -1,16 +1,19 @@
 require "rubygems"
 require "treetop"
+require_relative "grammar/sandbox"
 
 require "awesome_print"
 require "pry"
 
 def parse(data)
-  Treetop.load File.join(__dir__, "grammar/a2l")
-  parser = A2lGrammarParser.new
+  Treetop.load File.join(__dir__, "grammar/sandbox")
+  parser = SandboxParser.new
+  #Treetop.load File.join(__dir__, "grammar/a2l")
+  #parser = A2lGrammarParser.new
   ast = parser.parse(data)
 
   if ast
-    ap ast.to_hash
+    ap extract_hash(ast)
   else
     parser.failure_reason =~ /^(Expected .+) after/m
     puts "#{$1.gsub("\n", '$NEWLINE')}:"
@@ -19,9 +22,15 @@ def parse(data)
   end
 end
 
+def extract_hash(node)
+  [].tap do |ary|
+    node.elements.each do |element|
+      ary.push(extract_hash(element)) if element.elements
+      ary.push(element.to_value) if element.respond_to?(:to_value)
+    end
+  end.flatten
+end
 
-#Treetop.load File.join(__dir__, "grammar/sandbox")
-#parser = SandboxParser.new
 
 TESTA2L = <<-EOS.gsub(/^ {2}/, "")
   /begin CHARACTERISTIC foo.bar.bay
@@ -52,15 +61,16 @@ TESTA2L2 = <<-EOS.gsub(/^ {2}/, "")
 EOS
 
 TESTSTR = <<-EOS.gsub(/^ {2}/, "")
-  Start some_stuff
+  /begin FOO some_other stuff
     baz
+    /begin ANNOTATION
+      la li lu
+      some more
+    /end ANNOTATION
     bar
-  End
+  /end FOO
 EOS
 
-puts TESTA2L2
-parse(TESTA2L2)
-
-#a = parser.parse(TESTSTR)
-#ap a.to_hash
+puts TESTSTR
+parse(TESTSTR)
 

@@ -1,45 +1,31 @@
 grammar Sandbox
-  rule label
-    'Start ' name newline
-    (indent? (foo / bar / baz) newline)+
-    'End' newline
+
+  rule document
+    ( text / tag )*
+  end
+
+  rule text
+    [^/]+
+    { def to_value; text_value.lines.map(&:strip).reject(&:empty?).map { |l| { text: l } } end }
+  end
+
+  rule tag
+    '/begin ' [\w]+ [^\n]* [\n]
+    ( indent? ( text / tag ) )*
+    '/end ' [^\n]+ &{|s| s[1].text_value == s[6].text_value } [\n]
     {
-      def to_hash(n=self)
-        if n.respond_to?(:to_hash) && n != self
-          n.to_hash
-        else
-          n.elements ? n.elements.reduce({}) { |s,e| s.merge(to_hash(e)) } : {}
-        end
+      def to_value
+        { text_value.match(/\/begin (\w+)/) { $1 } => text_value.lines[1..-2] }
       end
     }
-  end
-
-  rule name
-    [A-Za-z\._0-9]+ {
-      def to_hash
-        { name: text_value }
-      end
-    }
-  end
-
-  rule foo
-    'foo' { def to_hash; { foo: "present" } end }
-  end
-
-  rule bar
-    'bar' { def to_hash; { bar: "present" } end }
-  end
-
-  rule baz
-    'baz' { def to_hash; { baz: "present" } end }
   end
 
   rule indent
-    [\s]+ { def to_hash; {} end }
+    [\s]+
   end
 
   rule newline
-    [\n] { def to_hash; {} end }
+    [\n]
   end
 
 end
