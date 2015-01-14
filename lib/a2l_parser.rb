@@ -1,4 +1,3 @@
-require "rubygems"
 require "treetop"
 
 require "awesome_print"
@@ -11,26 +10,36 @@ class A2lParser
   require_relative "../grammar/a2l"
   require_relative "../grammar/characteristic"
 
-  def self.parse(data)
-    a2l_parser = A2lGrammarParser.new
-    characteristic_parser = CharacteristicGrammarParser.new
+  def initialize(data)
+    @data = data.respond_to?(:read) ? data.read : data
+  end
 
-    ast = a2l_parser.parse(data)
-
+  def characteristics
     if ast
-      characteristics = walk_tree(ast) { |klass| klass == A2L::Characteristic }
-      ap characteristics
+      walk_tree(ast) { |klass| klass == A2l::Characteristic }
     else
-      parser.failure_reason =~ /^(Expected .+) after/m
+      a2l_parser.failure_reason =~ /^(Expected .+) after/m
       puts "#{$1.gsub("\n", '$NEWLINE')}:"
-      puts data.lines.to_a[parser.failure_line - 1]
-      puts "#{'~' * (parser.failure_column - 1)}^"
+      puts @data.lines.to_a[a2l_parser.failure_line - 1]
+      puts "#{'~' * (a2l_parser.failure_column - 1)}^"
     end
   end
 
   private
 
-  def self.walk_tree(root_node, ary=[], &block)
+  def ast
+    @ast ||= a2l_parser.parse(@data)
+  end
+
+  def a2l_parser
+    @a2l_parser ||= A2lGrammarParser.new
+  end
+
+  def characteristics_parser
+    @characteristics_parser ||= CharacteristicGrammarParser.new
+  end
+
+  def walk_tree(root_node, ary=[], &block)
     ary << root_node.to_array if block.call(root_node.class)
     root_node.elements.each { |node| walk_tree(node, ary, &block) } if root_node.elements
     ary
@@ -64,5 +73,5 @@ TESTA2L = <<-EOS.gsub(/^ {2}/, "")
   /end CHARACTERISTIC
 EOS
 
-A2lParser.parse(TESTA2L)
+ap A2lParser.new(TESTA2L).characteristics
 

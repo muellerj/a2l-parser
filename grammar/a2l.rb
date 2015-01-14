@@ -1,4 +1,4 @@
-module A2L
+module A2l
   class Document < Treetop::Runtime::SyntaxNode
   end
 

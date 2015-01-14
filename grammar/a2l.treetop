@@ -2,7 +2,7 @@ grammar A2lGrammar
   rule document
     whitespace*
     ( characteristic whitespace* )*
-    <A2L::Document>
+    <A2l::Document>
   end
 
   rule characteristic
@@ -12,7 +12,7 @@ grammar A2lGrammar
       (. / newline)
     )*
     '/end CHARACTERISTIC'
-    <A2L::Characteristic>
+    <A2l::Characteristic>
   end
 
   rule whitespace
